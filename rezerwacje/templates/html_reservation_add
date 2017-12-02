@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'rezerwacje/style.css' %}" />
+</head>
+<body>
+    <form action='' method="POST">
+        <label>Data:
+            <input type="date" name="date">
+        </label>
+        <input type="submit" value="Wyślij">
+    </form>
+    <table>
+        <tr>
+            <th>Daty rezerwacji:</th>
+        </tr>
+        <tr>
+            <td>{% for booking in bookings %} {{booking.date}}<br> {% endfor %}</td>
+        </tr>
+    </table>
+</body>
+</html>

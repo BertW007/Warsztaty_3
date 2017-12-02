@@ -2,7 +2,25 @@ div {
     margin: auto;
     width: 80%;
 }
-table {
-    border-width: 1px;
-    border-color: black;
+table, th, td {
+    margin: 0 auto;
+    border: 1px solid black;
+    border-collapse: collapse;
+    padding: 8px;
+}
+tfoot {
+    text-align: center;
+}
+form {
+    margin: 0 auto;
+    width: 300px;
+    padding: 8px;
+}
+label, input {
+    margin: 0 auto;
+    display: block;
+    margin-bottom: 3px;
+}
+.top_align {
+    vertical-align: top;
 }

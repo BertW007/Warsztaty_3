@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'rezerwacje/style.css' %}" />
+</head>
+<body>
+    <form action='' method="POST">
+        <label>Nazwa:
+            <input type="text" name="name" {% if room %} value="{{room.name}}" {% endif %}>
+        </label>
+        <label>Pojemność:
+            <input type="text" name="capacity" {% if room %} value="{{room.capacity}}" {% endif %}>
+        </label>
+        <label>Rzutnik:
+            <input type="checkbox" name="projector" {% if room.projector %} checked {% endif %}>
+        </label>
+        <input type="submit" value="Wyślij">
+    </form>
+</body>
+</html>

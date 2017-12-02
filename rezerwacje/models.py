@@ -10,6 +10,6 @@ class Room(models.Model):
 
 class Booking(models.Model):
 
-    date = models.DateField(unique=True)
+    date = models.DateField()
     room_id = models.ForeignKey(Room, on_delete=models.CASCADE)
     comment = models.TextField(null=True)

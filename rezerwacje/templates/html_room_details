@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'rezerwacje/style.css' %}" />
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Nazwa sali</th>
+                <th>Pojemność</th>
+                <th>Projektor</th>
+                <th>Daty rezerwacji</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ room.name }}</td>
+                <td>{{ room.capacity }}</td>
+                {% if room.projector %}
+                    <td>Tak</td>
+                {% else %}
+                    <td>Nie</td>
+                {% endif %}
+                <td><a href='/room/modify/{{room.id}}'>Dodaj rezerwację</a><br>
+                    {% for booking in bookings %} {{ booking.date }}<br> {% endfor %}</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

@@ -1,107 +1,72 @@
-from django.db.models.fields import CharField
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseRedirect
-from rezerwacje.models import Room, Booking
+from django.views import View
 from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.db.models import Q
+
 from datetime import date
 
-html_begin = """
-<html>
-    <body>
-        <div align="center">
-"""
-html_end = """
-        </div>
-    </body>
-</html
-"""
-html_form = """
-        <form action='' method="POST">
-            <label>Nazwa:
-            <input type="text" name="name" value={}>
-            </label><br>
-            <label>Pojemność:
-            <input type="text" name="capacity" value={}>
-            </label><br>
-            <label>Rzutnik:
-            <input type="checkbox" name="projector" {}>
-            </label><br>
-            <input type="submit" value="Wyślij">
-        </form>
-"""
+from rezerwacje.models import Room, Booking
+
 
 def main(request):
-    response = HttpResponse()
-    response.write(html_begin)
-    response.write("""
-<table borderwidth=1px bordercolor='black'>
-<tr><td colspan='3'>Nazwa sali</td><td>Status</td></tr>
-""")
-    rooms = Room.objects.all()
-    for room in rooms:
-        bookings = Booking.objects.filter(date=date.today()).filter(room_id=room.id)
-        if bookings:
-            status = "Zajęta"
-        else:
-            status = "Wolna"
-        response.write("""
-        <tr><td><a href='/room/{0}'>{1}</a></td>
-        <td><a href='/modify/{0}'>Edytuj</a></td>
-        <td><a href='/room/delete/{0}'>Usuń</a></td>
-        <td>{2}</td></tr>
-        """.format(room.id, room.name, status))
-    response.write("""
-    <tr><td colspan='4'><a href='/room/new'>Dodaj salę</a></td></tr></table>
-    """)
-    response.write(html_end)
-    return response
+    rooms = Room.objects.order_by('name')
+    bookings = Booking.objects.filter(date=date.today())
+    return render(request, 'html_main', {'rooms': rooms,
+                                         'bookings': bookings})
+
+
+def room_search(request):
+    rooms = Room.objects.order_by('name')
+    name = request.GET.get("name")
+    if name:
+        rooms = rooms.filter(name__icontains=name)
+    capacity = request.GET.get("capacity")
+    if capacity:
+        rooms = rooms.filter(capacity__gte=capacity)
+    projector = request.GET.get("projector")
+    if projector:
+        rooms = rooms.filter(projector=True)
+    date = request.GET.get("date")
+    if date:
+        bookings = Booking.objects.filter(date=date)
+        for booking in bookings:
+            rooms = rooms.exclude(id=booking.room_id_id)
+    else:
+        bookings = Booking.objects.filter(date=date.today())
+    if rooms:
+        return render(request, 'html_main', {'rooms': rooms,
+                                             'bookings': bookings})
+    else:
+        message = """Brak wolnych sal dla podanych kryteriów wyszukiwania<br>
+                     <a href='/'>Powrót</a>"""
+        return HttpResponse(message)
 
 
 def room_details(request, id):
     id = int(id)
-    response = HttpResponse()
-    response.write(html_begin)
     room = Room.objects.get(pk=id)
-    bookings = Booking.objects.filter(room_id=room.id)
-    if room.projector:
-        projector = "Tak"
-    else:
-        projector = "Nie"
-    response.write("""
-    <table borderwidth=1px bordercolor='black'>
-    <tr><td>Nazwa sali</td><td>Pojemność</td><td>Projektor</td><td>Daty:</td></tr>
-    """)
-    response.write("""
-    <tr>
-    <td>{}</td>
-    <td>{}</td>
-    <td>{}</td>
-    <td><a href='/room/modify/{}'>Dodaj rezerwację</a></td></tr>
-    """.format(room.name, room.capacity, projector, room.id))
-    for booking in bookings:
-        response.write("""
-        <tr><td colspan='3'></td><td>{}</td>
-        """.format(booking.date))
-    response.write(html_end)
-    return response
+    bookings = Booking.objects.filter(room_id=room.id)\
+                              .filter(date__gte=date.today())
+    return render(request, 'html_room_details', {'room': room,
+                                                 'bookings': bookings})
 
 
-def delete_room(request, id):
-    response = HttpResponse()
+def room_delete(request, id):
     id = int(id)
     room = Room.objects.get(pk=id)
     room.delete()
     return HttpResponseRedirect('/')
 
 
-@csrf_exempt
-def new_room(request):
-    response = HttpResponse()
-    if request.method == 'GET':
-        html = html_begin + html_form + html_end
-        response.write(html.format("", "", ""))
-        return response
-    else:
+@method_decorator(csrf_exempt, name='dispatch')
+class RoomNew(View):
+
+    def get(self, request):
+        return render(request, 'html_room_addmodify', {})
+
+    def post(self, request):
         name = request.POST.get("name")
         capacity = request.POST.get("capacity")
         if request.POST.get("projector"):
@@ -112,19 +77,17 @@ def new_room(request):
         return HttpResponseRedirect('/')
 
 
-@csrf_exempt
-def modify_room(request, id):
-    response = HttpResponse()
-    id = int(id)
-    room = Room.objects.get(pk=id)
-    if request.method == 'GET':
-        html = html_begin + html_form + html_end
-        if room.projector:
-            response.write(html.format(room.name, room.capacity, "checked"))
-        else:
-            response.write(html.format(room.name, room.capacity, ""))
-        return response
-    else:
+@method_decorator(csrf_exempt, name='dispatch')
+class RoomModify(View):
+
+    def get(self, request, id):
+        id = int(id)
+        room = Room.objects.get(pk=id)
+        return render(request, 'html_room_addmodify', {'room': room})
+
+    def post(self, request, id):
+        id = int(id)
+        room = Room.objects.get(pk=id)
         room.name = request.POST.get("name")
         room.capacity = request.POST.get("capacity")
         if request.POST.get("projector"):
@@ -135,36 +98,28 @@ def modify_room(request, id):
         room.save()
         return HttpResponseRedirect('/')
 
-def add_reservation(request, id):
-    room = Room.objects.get(pk=id)
-    if request.method == 'GET':
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ReservationAdd(View):
+
+    def get(self, request, id):
         id = int(id)
+        room = Room.objects.get(pk=id)
         bookings = Booking.objects.filter(room_id=room.id)
-        response = HttpResponse()
-        response.write(html_begin)
-        response.write("""
-<form action='' method="POST">
-    <label>Data:
-    <input type="date" name="date">
-    </label>
-    <input type="submit" value="Wyślij">
-</form>
-""")
-        response.write("""
-<table borderwidth=1px bordercolor='black'>
-<tr><td>Daty rezerwacji:</td></tr>
-""")
-        for booking in bookings:
-            response.write("<tr><td>{}</td></tr>".format(booking.date))
-        response.write("</table>" + html_end)
-        return response
-    else:
+        return render(request, 'html_reservation_add', {'bookings': bookings})
+
+    def post(self, request, id):
+        id = int(id)
+        room = Room.objects.get(pk=id)
         date = request.POST.get("date")
-        try:
-            book = Booking.objects.get(room_id=room, date=date)
-        except:
-            return HttpResponse("Termin zajęty")
-
-
-
-
+        if date < date.today():
+            message = """Nieprawidłowy termin<br>
+                         <a href='/room/{}'>Powrót</a>"""
+            return HttpResponse(message.format(id))
+        if Booking.objects.filter(room_id=room, date=date):
+            message = """Termin zajęty<br>
+                         <a href='/room/{}'>Powrót</a>"""
+            return HttpResponse(message.format(id))
+        else:
+            Booking.objects.create(date=date, room_id=room)
+            return HttpResponseRedirect('/')

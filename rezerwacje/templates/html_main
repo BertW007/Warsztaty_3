@@ -6,13 +6,58 @@
     <link rel="stylesheet" type="text/css" href="{% static 'rezerwacje/style.css' %}" />
 </head>
 <body>
-    <div align="center">
-        <table>
+    <table>
+        <thead>
             <tr>
-                <td colspan='3'>Nazwa sali</td>
-                <td>Status</td>
+                <th colspan='3'>Nazwa sali</th>
+                <th>Status</th>
             </tr>
-        </table>
-    </div>
+        </thead>
+        <tbody>
+            {% for room in rooms %}
+            <tr>
+                <td><a href='/room/{{room.id}}'>{{ room.name }}</a></td>
+                <td><a href='/modify/{{room.id}}'>Edytuj</a></td>
+                <td><a href='/room/delete/{{room.id}}'>Usuń</a></td>
+                {% if bookings %}
+                    {% for booking in bookings %}
+                        {% if booking.room_id_id == room.id %}
+                        <td>Zajęta</td>
+                        {% else %}
+                        <td>Wolna</td>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                <td>Wolna</td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="4">
+                    <form action="/search/" method="GET">
+                        <label><p>Wyszukaj wolne sale</p></label>
+                        <label>Nazwa:
+                            <input type="text" name="name" placeholder="Nazwa sali">
+                        </label>
+                        <label>Minimalna pojemność sali:
+                            <input type="number" name="capacity" placeholder="Pojemność">
+                        </label>
+                        <label>Rzutnik:
+                            <input type="checkbox" name="projector">
+                        </label>
+                        <label>Data:
+                            <input type="date" name="date">
+                        </label>
+                        <input type="submit" value="Szukaj">
+                    </form>
+                </td>
+            </tr>
+            <tr>
+                <td colspan='4'><a href='/room/new'>Dodaj salę</a></td>
+            </tr>
+        </tfoot>
+    </table>
 </body>
 </html>

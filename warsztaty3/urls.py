@@ -20,9 +20,10 @@ from rezerwacje.views import *
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^$', main),
+    url(r'^search/.*$', room_search),
     url(r'^room/(?P<id>(\d)+$)', room_details),
-    url(r'^room/new$', new_room),
-    url(r'^modify/(?P<id>(\d)+$)', modify_room),
-    url(r'^room/modify/(?P<id>(\d)+$)', add_reservation),
-    url(r'^room/delete/(?P<id>(\d)+$)', delete_room),
+    url(r'^room/delete/(?P<id>(\d)+$)', room_delete),
+    url(r'^room/new$', RoomNew.as_view()),
+    url(r'^modify/(?P<id>(\d)+$)', RoomModify.as_view()),
+    url(r'^room/modify/(?P<id>(\d)+$)', ReservationAdd.as_view()),
 ]
